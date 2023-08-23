@@ -16,19 +16,20 @@ export PATCHVBMETAFLAG
 
 CHROMEOS=false
 
-echo "解包boot"
+echo "Unpacking boot image"
 $Magiskboot unpack "$BOOTIMAGE"
 
 case $? in
   0 ) ;;
   1 )
-    echo "不支持的boot镜像!"
+    echo "Unsupported/Unknown image format"
     ;;
   2 )
-    echo "chromeos 镜像"
+    echo "ChromeOS boot image detected"
+    CHROMEOS=true
     ;;
   * )
-    echo "无法解包"
+    echo "Unable to unpack boot image"
     ;;
 esac
 
@@ -37,7 +38,7 @@ esac
 ###################
 
 # Test patch status and do restore
-echo "检查ramdisk"
+echo "Checking ramdisk status"
 if [ -e ramdisk.cpio ]; then
   $Magiskboot cpio ramdisk.cpio test
   STATUS=$?
@@ -48,14 +49,14 @@ fi
 case $((STATUS & 3)) in
   0 )  # Stock boot
     echo "Stock boot image detected"
-    SHA1=$($Magiskboot sha1 "$BOOTIMAGE")
+    SHA1=$($Magiskboot sha1 "$BOOTIMAGE" 2>/dev/null)
     cat $BOOTIMAGE > stock_boot.img
-    cp -af ramdisk.cpio ramdisk.cpio.orig
+    cp -af ramdisk.cpio ramdisk.cpio.orig 2>/dev/null
     ;;
   1 )  # Magisk patched
     echo "Magisk patched boot image detected"
     # Find SHA1 of stock boot image
-    [ -z $SHA1 ] && SHA1=$($Magiskboot cpio ramdisk.cpio sha1)
+    [ -z $SHA1 ] && SHA1=$($Magiskboot cpio ramdisk.cpio sha1 2>/dev/null)
     $Magiskboot cpio ramdisk.cpio restore
     cp -af ramdisk.cpio ramdisk.cpio.orig
     rm -f stock_boot.img
@@ -76,7 +77,7 @@ fi
 # Ramdisk Patches
 ##################
 
-echo "修补ramdisk"
+echo "Patching ramdisk"
 
 echo "KEEPVERITY=$KEEPVERITY" > config
 echo "KEEPFORCEENCRYPT=$KEEPFORCEENCRYPT" >> config
@@ -85,24 +86,33 @@ echo "RECOVERYMODE=$RECOVERYMODE" >> config
 [ ! -z $SHA1 ] && echo "SHA1=$SHA1" >> config
 
 # Compress to save precious ramdisk space
-
-$Magiskboot compress=xz bin/magisk32 magisk32.xz
- 
-$Magiskboot compress=xz bin/magisk64 magisk64.xz
-
+SKIP32="#"
+SKIP64="#"
+if [ -f bin/magisk32 ]; then
+  $Magiskboot compress=xz bin/magisk32 magisk32.xz
+  $Magiskboot compress=xz bin/stub.apk stub.xz
+  unset SKIP32
+fi
+if [ -f binmagisk64 ]; then
+  $Magiskboot compress=xz bin/magisk64 magisk64.xz
+  $Magiskboot compress=xz bin/stub.apk stub.xz
+  unset SKIP64
+fi
 
 $Magiskboot cpio ramdisk.cpio \
 "add 0750 $INIT bin/magiskinit" \
 "mkdir 0750 overlay.d" \
 "mkdir 0750 overlay.d/sbin" \
-"add 0644 overlay.d/sbin/magisk32.xz magisk32.xz" \
-"add 0644 overlay.d/sbin/magisk64.xz magisk64.xz" \
+"$SKIP32 add 0644 overlay.d/sbin/magisk32.xz magisk32.xz" \
+"$SKIP64 add 0644 overlay.d/sbin/magisk64.xz magisk64.xz" \
+"add 0644 overlay.d/sbin/stub.xz stub.xz" \
 "patch" \
 "backup ramdisk.cpio.orig" \
 "mkdir 000 .backup" \
 "add 000 .backup/.magisk config"
 
-rm -rf ramdisk.cpio.orig config magisk*.xz
+rm -f ramdisk.cpio.orig config magisk*.xz
+rm -f ramdisk.cpio.orig config magisk*.xz stub.xz
 
 #################
 # Binary Patches
@@ -133,7 +143,11 @@ fi
 #################
 # Repack & Flash
 #################
-echo "打包boot"
-$Magiskboot repack "$BOOTIMAGE"  || echo "打包完成"
 
-rm -rf stock_boot.img *kernel* *dtb* ramdisk.cpio*
+echo "Repacking boot image"
+$Magiskboot repack "$BOOTIMAGE" || echo "! Unable to repack boot image"
+
+rm -rf stock_boot.img kernel *dtb* ramdisk.cpio*
+
+# Reset any error code
+true
