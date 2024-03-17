@@ -9,7 +9,7 @@ export KEEPVERITY
 export KEEPFORCEENCRYPT
 
 BOOTIMAGE=$(ls *.img)
-chmod 0777 $BOOTIMAGE
+chmod 0777 "$BOOTIMAGE"
 ./magiskboot unpack "$BOOTIMAGE"
 
 case $? in
