@@ -10,9 +10,9 @@ export KEEPVERITY
 export KEEPFORCEENCRYPT
 
 if [ -f "boot.img" ]; then
-    BOOTIMG="./boot.img"
+    BOOTIMAGE=./boot.img
 else
-    BOOTIMG="./init_boot.img"
+    BOOTIMAGE=./init_boot.img
 fi
 
 ./magiskboot unpack "$BOOTIMAGE"
