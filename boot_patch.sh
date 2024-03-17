@@ -8,8 +8,17 @@ RECOVERYMODE=false
 export KEEPVERITY
 export KEEPFORCEENCRYPT
 
-BOOTIMAGE=$(ls *.img)
+if [ -f "boot.img" ]; then
+    BOOTIMAGE="boot.img"
+elif [ -f "init_boot.img" ]; then
+    BOOTIMAGE="init_boot.img"
+else
+    echo "Neither boot.img nor init_boot.img found in the current directory."
+    exit 1
+fi
+
 chmod 0777 "$BOOTIMAGE"
+
 ./magiskboot unpack "$BOOTIMAGE"
 
 case $? in
