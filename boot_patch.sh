@@ -6,7 +6,9 @@ RECOVERYMODE=false
 
 export KEEPVERITY
 export KEEPFORCEENCRYPT
-
+if [ -f "boot.img" ]; then
+    echo bootimg1111
+fi
 BOOTIMAGE=./boot.img
 
 ./magiskboot unpack "$BOOTIMAGE"
