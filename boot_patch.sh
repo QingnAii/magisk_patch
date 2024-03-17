@@ -1,15 +1,19 @@
 #!/bin/sh
 chmod 0777 ./boot.img 2>/dev/null
+chmod 0777 ./init_boot.img 2>/dev/null
+
 KEEPVERITY=false
 KEEPFORCEENCRYPT=false
 RECOVERYMODE=false
 
 export KEEPVERITY
 export KEEPFORCEENCRYPT
+
 if [ -f "boot.img" ]; then
-    echo bootimg1111
+    BOOTIMG="./boot.img"
+else
+    BOOTIMG="./init_boot.img"
 fi
-BOOTIMAGE=./boot.img
 
 ./magiskboot unpack "$BOOTIMAGE"
 
