@@ -8,7 +8,7 @@ RECOVERYMODE=false
 export KEEPVERITY
 export KEEPFORCEENCRYPT
 
-BOOTIMAGE=./boot.img
+BOOTIMAGE=$(ls *.img)
 
 ./magiskboot unpack "$BOOTIMAGE"
 
