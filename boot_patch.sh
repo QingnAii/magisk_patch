@@ -1,6 +1,6 @@
 #!/bin/sh
-
-
+chmod 0777 ./init_boot.img 2>/dev/null
+chmod 0777 ./boot.img 2>/dev/null
 KEEPVERITY=false
 KEEPFORCEENCRYPT=false
 RECOVERYMODE=false
@@ -9,8 +9,6 @@ export KEEPVERITY
 export KEEPFORCEENCRYPT
 
 BOOTIMAGE=$(ls *.img 2>/dev/null)
-
-chmod 0777 "$BOOTIMAGE"
 
 ./magiskboot unpack "$BOOTIMAGE"
 
